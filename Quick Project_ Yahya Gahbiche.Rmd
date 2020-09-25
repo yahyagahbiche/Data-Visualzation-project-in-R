@@ -1,0 +1,656 @@
+---
+title: "Quick Project 1"
+author: "Yahya Gahbiche"
+date: "May 11, 2020"
+output: 
+  html_document:
+    toc: TRUE
+    toc_depth: 3
+    toc_float: true
+    number_sections: true
+---
+
+
+```{r}
+# Course: 3210 Communicating Data
+# Purpose: Quick project 1
+# Date: 5/11/2020
+# Author: Yahya Gahbiche
+```
+
+
+```{r}
+# Clear environment of variables and functions
+rm(list = ls(all = TRUE)) 
+```
+
+```{r echo = FALSE, message=FALSE, warning=FALSE}
+
+# Clear environmet of packages
+if(is.null(sessionInfo()$otherPkgs) == FALSE)lapply(paste("package:", names(sessionInfo()$otherPkgs), sep=""), detach, character.only = TRUE, unload = TRUE)
+```
+
+
+# Project Goal
+
++ The goal of this project is to clean and analyze the dataset from the 2014-15 home sales in King County in order to find insights or patterns from the variables we have interest in. We will do base and detailed EDA in R Markdown. The deliverables will be given to Jennifer Lee in the form of a Technical Appendix. A memo will also be prepared and presented to a non-technical person, the hiring manager of Zillow. 
+
+# Load Packages
+
+```{r message=FALSE, warning=FALSE}
+# Load packages
+
+library(tidyverse)
+library(patchwork)
+library(GGally)
+library(readr)
+library(lubridate)
+library(gridExtra)
+library(scales)
+library(janitor)
+library(knitr)
+library(dplyr)
+
+```
+
+# Load and transforming data
+
+```{r}
+# Loading data
+home <- read.csv("kc_home_sales.csv")
+
+# Taking a look at our data structures  
+str(home)
+
+# Transforming data: Converting variables into factors
+
+home$bedrooms <- as.factor(home$bedrooms)
+home$bathrooms <- as.factor(home$bathrooms)
+home$floors <- as.factor(home$floors)
+home$waterfront <- as.factor(home$waterfront)
+home$view <- as.factor(home$view)
+home$grade <- as.factor(home$grade)
+home$condition <- as.factor(home$condition)
+
+# converting the variable date into date format
+home$date <- ymd(home$date)
+
+# Correcting incorrect data in bedroom
+home$bedrooms[home$bedrooms == 33] <- 3
+
+# Removing variables we don't need
+home <- select(home,-c(zip_code, lat, long))
+
+```
+
+
+# Base EDA Step 1: Uni-variate non-graphical EDA
+
+```{r}
+# View the data
+head(home)
+
+```
+
+**Comments**
+
++ We can see all the variables of the dataset that we need, along with the changes that we made like the format of the date. The variables we removed are not necessary so we won't need them in the analysis.
+ 
+
+**Check the structure of the data**
+
+```{r}
+str(home)
+
+```
+
+**Summary table of the variables**
+
+```{r}
+summary(home)
+
+```
+
+**Comments** 
+
++ We have 7 factors, 4 integers, and 1 numeric variable.
++ Our dependent variable is price and the rest are our independent variables.
++ Looking at the max, min, and means:
+  - Date ranges from May 2, 2014 to May 27, 2015
+  - Price ranges from $75,000 to $7,700,000 with a mean of $540,182
+  - Bedrooms generally vary between 1 and 6. We might want to get rid of the "Other" level.
+  - Bathrooms vary between 1 and 2.5 but there are higher values we cannot see in the summary table. We need to look into that.
+  - The square foot living space ranges from 290 to 13540 sqt with a mean of 2080 sqt.
+  - The square foot of the lot ranges from 520 and 1651359 with a mean of 10688. There are probably outliers here that we might want to look at in the graphs.
+  - Floors range between 1 and 3.5, most houses have 1 or 2 floors. 
+  - Most lots are not on a waterfront, having a house by the water seems rare.
+  - View is ranked from 0 to 4, most homes don't have a good view. 
+  - Grade, which is the quality of the interior build and finishing range from 7 to 11. Some values have "Other" and we might look into those. 
+  - Condition are ranked from 1 to 5 with the average having 3.
+  - The year built ranges from 1900 to 2015. 
+ 
+**Questions** 
+
+- How many houses are sold over time?
+- How many houses are sold at different prices?
+- How does the number of bedrooms affect the prices of homes?
+- As the number of floor increases does the square footage increase as well?
+- What's the relationship between square footage and price?
+- How is the year built variable affecting the price?
+- Does a home with a higher number of floors mean they have a better view?
+- Do homes with waterfront always have a good view?
+
+
+# Base EDA Step 2: Uni-Variate graphical EDA
+
+## Step 2.1: Categorical/ Factor variables: 
+
+
+**Bathrooms, bedrooms, floors, and waterfloor visualization** 
+
+```{r}
+grid.arrange(
+  
+home %>% 
+  ggplot(mapping = aes(x = grade)) +
+  geom_bar()+
+  ggtitle("Grade counts"),
+  
+home %>% 
+  ggplot(mapping = aes(x = bedrooms)) +
+  geom_bar()+
+  ggtitle("Bedroom counts")+
+  coord_cartesian(xlim =c(1,10)),
+
+home %>% 
+  ggplot(mapping = aes(x = floors)) +
+  geom_bar()+
+  ggtitle("Floor counts")+
+  coord_cartesian(xlim =c(1,10)),
+
+home %>% 
+  ggplot(mapping = aes(x = waterfront)) +
+  geom_bar()+
+  ggtitle("Waterfront counts"),
+
+
+
+ncol = 2
+)
+```
+
+
+
+**Bathrooms visualization**
+
+```{r}
+home %>% 
+  ggplot(mapping = aes(x = bathrooms)) +
+  geom_bar()+
+  ggtitle("Bathroom counts")+
+  coord_cartesian(xlim =c(1,20))
+
+```
+
+
+**View visualization**
+
+```{r}
+home %>% 
+  ggplot(mapping = aes(x = view)) +
+  geom_bar()+ xlab ("Home view score") +
+  ggtitle("View counts")+
+  coord_cartesian(xlim =c(1,20))
+```
+
+
+**Date**
+
+```{r warning= FALSE}
+home %>% 
+  ggplot(mapping = aes(x = date)) +
+  geom_bar(binwidth = 1)+ xlab("Date of Sale") +
+  ggtitle("Home sold by date")
+
+
+```
+
+
+**Comments** 
+
++ _Grade_: Most homes have a score of 7 and 8 while very few have a score of less than 6 or more than 10. Most homes are average homes. 
+
++ _Bedrooms_: The majority of homes have 3 bedrooms with a count of 9825 while few have either 5+ or 1 bedroom. Having 1 bedroom can be a studio or a small apartment. 
+
++ _Floors_: The most common number of floor in a home is 1 floor with a count of 10680. A significant number of homes also have 2 floors, the count is 8241. There aren't many home with more than 2 floors. My guess is even large homes would rather have more square footage than multiple floors. 
+
++ _Waterfront_: 21450 of the homes in the data don't have a waterfront and only 163 have a view on the waterfront. We might want to look at the correlation between waterfront view. Most homes don't have a good view.
+
++ _Date_: The number of homes sold peak at around July 2014 and the falls in January and February. The home sales count increases again in April and May. 
++ This tells us that the housing market relies heavily on seasons. Summer seems to be the busiest season to buy a home wherease in winter not many people purchase homes.
+
+
+**Questions**
+
+- Is there a correlation between the number of bedrooms and the price of the lot? 
+- How does the square footage increase with the increase of the number of floors?
+
+
+## Step 2.2: Quantitative
+
+**Price**
+
+```{r}
+home %>% 
+  ggplot(mapping = aes(x = price/1000)) + 
+  geom_histogram(binwidth = 1) + xlab("Home prices in thousands")+
+  ggtitle("Count of home prices in thousands")
+
+```
+
+
+**Comments**
+
++ We can see the shape of the graph but it's hard to read the values. We might want to ignore outliers with high prices for now and focus on the dense part of the curve. We'll take homes with 3 million dollars and less.
+
+
+
+```{r}
+# Creating a subset of prices less than 3 million dollars.
+
+home_subset <- subset(home, home$price< 3000000)
+
+```
+
++ Recreating the visualization of price in thousands using home prices less than $3 million. We will also have the square footage variable next to the price variable for pattern detection. We'll use grid.arrange
+
+
+**Comparing the pattern of price with square footage of**
+
+
+```{r}
+graph_1 <- grid.arrange(
+
+# price graph  
+home_subset %>% 
+  ggplot(mapping = aes(x = price/1000)) + 
+  geom_histogram(binwidth = 5) + xlab("Home prices in thousands")+
+  ggtitle("Count of home prices in thousands with values less than $3 million"),
+
+# sqft_living graph
+home_subset %>% 
+  ggplot(mapping = aes(x = sqft_living)) + 
+  geom_histogram(binwidth = 10) + xlab("Square footage")+
+  ggtitle("Count of home square footages "),
+
+ncol = 1
+)
+graph_1
+
+```
+
+**Comments**
+
++ One thing we notice is that the majority of homes are worth less than 1 million dollar.
+
++ We have a high concentration of homes sold at less than $500,000.
+
++ Average home square footage is 2080, most homes have less than 5000 sqft in space.
+
++ It is very evident that price and square footage are positively correlated. 
+  
+  
+**Question**
+  
+- How is the price and square footage correlated? 
+ 
+  
+# Base EDA Step 3: Multi-variate non-graphical
+
+## Step 3.1: Categorical 
+
+
+**Bathrooms and bedrooms**
+
+```{r}
+# Countingency/cross table
+
+home_subset %>% 
+  tabyl(bathrooms, bedrooms) %>% 
+  adorn_totals(where = c("row","col")) %>% 
+  adorn_title(placement = "combined", "Number of bathrooms", "Number of bedrooms") %>% 
+  kable()
+
+```
+
+
+**Comments**
+
++ The most common number of bathroom in homes of 2, 3, and 4 bedrooms is:
+  - 1, 1.75, 2, 2.25, and 2.5
++ The most common combination of number of bathroom and bedroom is a home of 3 bedrooms and 2.5 bathrooms.
+
+
+**Bathrooms and Floors**
+
+```{r}
+# Countingency/cross table
+
+home_subset %>% 
+  tabyl(bedrooms, floors) %>% 
+  adorn_totals(where = c("row","col")) %>% 
+  adorn_title( placement = "combined", "Number of bedrooms", "Number of floors") %>% 
+  kable()
+  
+```
+
+
+
+**Comments** 
+
++ Comparing the number of floors with the number of bedrooms we find that most homes have:
+  - 1 floor, 2 bedrooms
+  - 1 floor, 3 bedrooms
+  - 1 floor, 4 bedrooms
+  - 2 floors, 3 bedrooms
+  - 2 floors, 4 bedrooms
+
+
+**View and Floors**
+
+```{r}
+# Countingency/cross table
+
+home %>% 
+  tabyl(floors, view) %>% 
+  adorn_totals(where = c("row","col")) %>% 
+  adorn_title(placement = "combined", "Number of floors", "Home view score") %>% 
+  kable()
+
+```
+
+**Comments**
+
++ It is evident that the majority of homes with 1 floor don't have a good view.
+
++ Homes with 2 floors also don't have a nice view
+
++ Homes with 3 floors have better views but still not excellent views
+
++ A logical interpretation of this is that these homes are located in a metropolitan area where there are high-rise buildings around. 2 or 3 floor won't make a significant change in the homes views.
+
+
+**Waterfront and view**
+
+```{r}
+home %>% 
+  tabyl(waterfront, view) %>%  
+  adorn_totals(where = c("row","col")) %>% 
+  adorn_title(placement = "combined", "Waterfront", "Home view score") %>% 
+  kable()
+
+
+```
+
+
+**Comments**
+
++ In the group of homes with a waterfront view, 135 homes have a view score of 4, whereas only 1 house has a score of 1, and 0 homes have a score of 0. 
+
++ This tables shows that the if a home is on a waterfront it must have a better view. We now have just answered one of our questions.
+
+
+
+## Step 3.2: Quantitative 
+
+**Looking at correlation between Prices and Discounts**
+
+```{r}
+# Correlation table
+
+home %>% 
+  select_if(is.numeric) %>% 
+  cor() %>% 
+  round(2) %>% 
+  kable()
+
+```
+
+
+**Comments**
+
++ This table shows that living sqft and price are positively correlated with a value of 0.7 which is considered high. 
+
+
+**Questions**
+
+- How does the price interact with the square footage graphically?
+
+
+# Base EDA Step 4: Multi-variate graphical
+
+## Step 4.1: Categorical: 
+
+**Looking at multiple variables at a time**
+
+```{r}
+
+grid.arrange(
+  
+  # bedrooms
+  home %>% 
+    ggplot(mapping = aes(x = bedrooms, fill = grade)) + 
+    geom_bar(position = "dodge") + xlab("Number of bedrooms"),
+  
+  #Condition
+  home %>% 
+    ggplot(mapping = aes(x = condition, fill = grade)) + 
+    geom_bar(position = "dodge") + xlab("Condition of lot"),
+  
+  #floors
+  home %>% 
+    ggplot(mapping = aes(x = floors, fill = grade)) + 
+    geom_bar(position = "dodge") + xlab("Number of floors"),
+  
+  # waterfront
+  home %>% 
+    ggplot(mapping = aes(x = waterfront, fill = grade)) + 
+    geom_bar(position = "dodge") + xlab("Waterfront"),
+
+  ncol = 2
+)
+
+```
+
+
+**Graphing the variables bathrooms and grade separately as it's easier to read this way**
+
+```{r}
+# bathroom
+home %>% 
+    ggplot(mapping = aes(x = bathrooms, fill = grade)) + 
+    geom_bar(position = "dodge") + xlab("Number of bathrooms") +
+    ggtitle("Comparing the home grades with the number of bathrooms") + 
+    theme_classic()
+
+```
+
+
+**Comments** 
+
++ All the graphs above show that homes tend to range from green to blue which is the score between 6-9 on the grade scale.
+
++ The quality of intitial home build and finishing of the peaks range from 8-10. Most homes have good looking interior and build. 
+
+
+## Step 4.2: Quantitative
+
+
+```{r message = FALSE}
+
+graph_2 <- home %>% 
+  ggplot(mapping = aes(x = yr_built, y = price/1000)) + 
+  geom_smooth() + xlab("Year built") + ylab("Price by 1000s") + 
+  ggtitle("Prices of homes by year they were build") +
+  theme_classic()
+graph_2
+
+```
+
+
+**Comments**
+
++ We can divide this smooth line graph into 3 segments:
+
+  - The first segment is from 1900 to 1925: Prices are high: This can be explained by authenticity because for these homes have historical values. Much like wine, the older it is the more expensive it gets.
+  
+  - The second segment is from 1925 to 1975: Prices are low and they remain at that level for a while. Homes don't hold a high value because neither very authentic nor very modern.
+  
+  - The fird and last segment starts from homes built in 1975 start to gain a higher value until the present day. Homes became more modern, the luxurous lifestyle became a trend, new engeneering techniques and strong building materials have been introduced. Those factors increase the value of homes.
+  
+
+
+## Step 4.3: Categorical and Quantitative 
+
+
+**Looking at how prices vary with number of bedrooms and square footage**
+
+```{r message=FALSE}
+# Detailed Scatter plot
+
+home %>% 
+    ggplot(mapping = aes(x = price/1000, y = sqft_living, color = bedrooms))+
+    geom_point() + xlab("Price in thousands") + ylab("Square footage") +
+    theme_classic() + 
+    ggtitle("Comparing price with number of bedrooms and square footage")
+
+```
+
+**Comments** 
+
++ As the square footage increase so does the price of the homes. Most homes look green indicating that most homes have 3 to 6 bedrooms. 
+
++ We can see some blue data points increasing as the square footage increase. This indicates that the number of bedrooms increase the value of properties.
+
+**Looking at how the number of floors affect the square footage of living**
+
+```{r warning= FALSE}
+graph_3 <- 
+  
+ home %>% 
+    ggplot(mapping = aes(x = sqft_living, color = floors))+
+    geom_bar() + xlab("Square footage") +
+    theme_classic() + 
+    ggtitle("Comparing square footage with number of floors")
+
+graph_3
+
+```
+
+**Comments**
+
++ This graph shows that most properties with small square footage tend to have 1 floor but as the square footage increases the number of floors doesn't increase dramatically. 
+
++ The largest homes are colored in green indicating that they have 2 floors.
+
+
+# Detailed EDA - Questions raised in Base EDA
+
+## Question 1: How are the prices changing for homes built after the year 2005 with only 1 floor?
+
+**Creating a subset for homes built after 2005 with only 1 floor**
+
+```{r}
+#Subset: 1 Floor, yr_built after 2005
+
+subset_1 <- home %>% 
+  select(c("price", "date", "floors", "sqft_lot", "yr_built")) %>% 
+  filter(floors == "1",  yr_built > 2005)
+
+```
+
+**Summary of the new subset**
+
+```{r}
+summary(subset_1)
+```
+
+
+```{r message=FALSE}
+# graphing prices that have only 1 floor
+
+homes_in_recession <- subset_1 %>% 
+  ggplot(mapping = aes(x = yr_built, y = price/1000)) + 
+  geom_smooth(se = FALSE) + xlab("Year built starting from 2005") +
+  ylab("Home prices in thousands") +
+  ggtitle("Prices of homes with one floor, built in the last 15 years") + 
+  theme_classic()
+homes_in_recession
+
+```
+
+**Comments**
+
++ We filtered the homes with 1 floor as it is the most common number of floor available for homes in the US. 
+
++ We also filtered the years starting from the year 2005. 
+
++ Prices started to increase from 2005 until 2008. This was due to the **housing bubble** where people and real estate companies started building homes and banks giving home loans. This had resulted in a tremendous peak in the prices of homes. 
+
++ The drop in prices after 2008 represents the **burst of housing bubble**, this was a major factor in causing the **great recession of 2007-2009**. Prices only started to recover from 2011 and they are still unstable until today.
+
+## Question 2: How does the square footage and view affect home prices?
+
+```{r}
+graph_4 <- 
+  
+home_subset %>% 
+  ggplot(mapping = aes(x = price/1000 , y = sqft_living , color = view)) +
+  geom_point() + xlab("Home prices in thousands") + 
+  ylab("Square footage of living space")+
+  geom_smooth(method = 'lm') + 
+  ggtitle("Incease of home prices as square footage and view score increase") +
+  theme_classic()
+graph_4
+  
+  
+```
+
+
+**CommentS**
+
++ We notice that as the price of homes increase we see less homes with view scores of 0 and 1. The majority of expensive homes have a great view. Additionally, the regression line shows a positive slope indicating that there is an increase in the square footage as the price increases.
+
++ We can conclude that the view and the square footage increase the value of homes. 
+
++ This might seem intuitive and showing it graphically proves the intuition. 
+
+
+# Summary
+
++ Square footage increase the value of homes. Price and square footage are positively correlated with a coefficient of **0.7** 
+
++ Most homes have 3 bedrooms and 2 bathrooms. We can infer some infomation about the demographics of our dataset. 
+
++ The increase of number of floors does not always guarantee better views. However, homes on waterfront increase the sales price dramatically as the view and waterfront are positively correlated.
+
++ The most expensive homes are either very old and historic or recent and modern. 
+
++ The number of bedrooms increase the square footage and therefore it increases the value of lots.
+
++ The majority of lots with 2 floors have higher square footage. 
+
++ We have demonstrated graphically how the prices of homes increased during the **great recession** when we filtered our data by date. 
+
++ Views and square footage together increse the value of homes.
+
+
+```{r}
+ggsave(filename = 'Comparing lot prices with square footage.png', plot = graph_1)
+ggsave(filename = 'Price of lots by year built.png', plot = graph_2)
+ggsave(filename = 'Comparing square footage with number of floors.png', plot = graph_3)
+ggsave(filename = 'Incease of home prices as square footage and view score increase.png', plot = graph_4)
+ggsave(filename = 'Home prices with one floor during the great recession.png', plot = homes_in_recession)
+
+```
+

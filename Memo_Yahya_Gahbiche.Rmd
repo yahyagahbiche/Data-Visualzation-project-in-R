@@ -1,0 +1,52 @@
+---
+output: html_document
+---
+### **To: Jennifer Lee**
+### **From: Yahya Gahbiche**
+### **Date: 05/11/2020**
+**RE: 2014-2015 King County Home Sales Analysis**
+---
+
+```{r include=FALSE}
+# Course: 3210 Communicating Data
+# Purpose: Quick Project 1
+# Date: 05/11/2020
+# Author: Yahya Gahbiche
+```
+<br>
+
+
+With the big tech giants like Amazon and Microsoft expanding in the Greater Seattle Area, the housing market became more attractive than ever before. We used the data from 2014-2015 in King county on house sales and was able to analyze it and detect patterns. From our analysis,we have derived insights and valuable information which we can use for the current housing market. The dataset contained home sales from the Kind county area from May 2014 to May 2015. The data has 16 variables but for the sake of our analysis we removed some variables that were not important for our analysis and kept the ones that we believe will give us better insights. We also cleaned the data to remove outliers. 
+
+In this report, I will be presenting 2 questions that caught our attention. 
+<br>
+
+
+The first question is, **How does the square footage and view affect home prices?** We have plotted a scatter plot of homes and focused our attention on 3 variables: sales prices, square footage of the living area, and finally the view which has a scale from 0 to 4.
+Each dot in the graph represents an observation. Using the colors as an indication of the score given to each home we concluded that the views of homes increase as the prices increase. Not only that, but we also found out that the square footage increase as well. This means that people invest in homes that are large in living space and they prefer great views. This information can be useful to predict the prices of homes by using the variable of view and square footage. 
+
+<br>
+
+![](Incease of home prices as square footage and view score increase.png){width=500px}
+
+
+The second question regards the square footage and the number of floors in a home. **How is the square footage affecting the number of floors at each lot?**. Land is scarce, so having a home with the right amount of floors and the right square footage will help us determine the prices of the homes with high accuracy. Intuitively, we would expect to see an increase in the number of floors as the square footage increase. For example if a family owns a large home they are more likely to have the bedrooms of the kinds in another floor. That is true, however, we realized that the majority of large homes have 1 or 2 floors. So there is a point in which the number of floors move from 1 to 2 while the square footage keeps increasing. In other word, all large homes will have 2 floors, it's rare that they go to more than 2 floors. 
+
+<br>
+
+![](Comparing square footage with number of floors.png){width=500px}
+
+
+We have derived many insights through the home sales dataset 2014-2015 in King county. Looking at different factors that affect the price of lots, we were able to determine that homes with square footage increase the view of the lot. We have also determined that the view and the price are correlated which means they increase together. With these two finidings in mind we conclude that the views and square footage increase the value of a home. Additionally, homes in water fronts always guarantee high prices of homes. However, the number of floors doesn't necessarily increase the view and price of a lot. Through the second question, we can confirm that larger homes have only a maximum of 2 floors. While small homes have 1 floor.
+
+<br>
+We hope that this analysis contributes to our understanding of the housing market in King county. Attached to this memo are 2 graphs created using the statistical software R. Please let us know if you have any questions or suggestions about this report. 
+<br>
+
+Best regards,
+
+Yahya
+
+
+
+
